@@ -342,18 +342,7 @@ if(USE_TBB)
   list(APPEND ATen_CPU_DEPENDENCY_LIBS TBB::tbb)
 endif()
 
-if(BLAS_FOUND)
-  if($ENV{TH_BINARY_BUILD})
-    message(STATUS "TH_BINARY_BUILD detected. Enabling special linkage.")
-    list(APPEND ATen_CPU_DEPENDENCY_LIBS
-      "${BLAS_LIBRARIES};${BLAS_LIBRARIES};${BLAS_LIBRARIES}")
-  else($ENV{TH_BINARY_BUILD})
-    list(APPEND ATen_CPU_DEPENDENCY_LIBS ${BLAS_LIBRARIES})
-  endif($ENV{TH_BINARY_BUILD})
-endif(BLAS_FOUND)
-
 if(LAPACK_FOUND)
-  list(APPEND ATen_CPU_DEPENDENCY_LIBS ${LAPACK_LIBRARIES})
   if(USE_CUDA AND MSVC)
     # Although Lapack provides CPU (and thus, one might expect that ATen_cuda
     # would not need this at all), some of our libraries (magma in particular)
