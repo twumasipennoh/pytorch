@@ -71,6 +71,7 @@ CPP_TEST_PREFIX = "cpp"
 CPP_TEST_PATH = "build/bin"
 DISTRIBUTED_TEST_PREFIX = "distributed"
 INDUCTOR_TEST_PREFIX = "inductor"
+DYNAMO_TEST_PREFIX = "dynamo"
 
 
 # Note [ROCm parallel CI testing]
@@ -450,7 +451,7 @@ JIT_EXECUTOR_TESTS = [
 ]
 
 INDUCTOR_TESTS = [test for test in TESTS if test.startswith(INDUCTOR_TEST_PREFIX)]
-DYNAMO_TESTS = [test for test in TESTS if test.startswith("dynamo")]
+DYNAMO_TESTS = [test for test in TESTS if test.startswith(DYNAMO_TEST_PREFIX)]
 DISTRIBUTED_TESTS = [test for test in TESTS if test.startswith(DISTRIBUTED_TEST_PREFIX)]
 TORCH_EXPORT_TESTS = [test for test in TESTS if test.startswith("export")]
 FUNCTORCH_TESTS = [test for test in TESTS if test.startswith("functorch")]
@@ -1432,7 +1433,6 @@ def get_selected_tests(options) -> List[str]:
                 "functorch/test_dims",
                 "functorch/test_rearrange",
                 "functorch/test_parsing",
-                "dynamo/test_subclasses",
                 "torch_np/numpy_tests/core/test_multiarray",
             ]
         )
