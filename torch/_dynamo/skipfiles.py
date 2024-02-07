@@ -38,7 +38,7 @@ from ..utils import _config_module
 from .utils import getfile
 
 from .variables import (
-    FunctorchVmapHigherOrderVariable,
+    FunctorchHigherOrderVariable,
     NestedUserFunctionVariable,
     SkipFilesVariable,
     UserFunctionVariable,
@@ -202,6 +202,7 @@ MOD_INLINELIST = {
     "torch._dynamo.comptime",
     "torch._dynamo.polyfill",
     "torch._functorch.vmap",
+    "torch._functorch.eager_transforms",
     "torch._inductor.test_operators",
     "torch.amp.autocast_mode",
     "torch.ao.nn",
@@ -385,7 +386,7 @@ def check_verbose(obj, is_inlined_call=False):
     rule = torch._dynamo.trace_rules.lookup_inner(
         fi.py_obj, fi.name, fi.filename, is_inlined_call
     )
-    if rule in [UserFunctionVariable, FunctorchVmapHigherOrderVariable]:
+    if rule in [UserFunctionVariable, FunctorchHigherOrderVariable]:
         return SkipResult(
             False,
             "inlined according trace_rules.lookup",
