@@ -212,7 +212,7 @@ def _get_module_name_filter(module_name: str):
         # get_attr nodes doesn't have nn_module_stack?
         nn_module_stack = n.meta.get("nn_module_stack", {})
         names = [
-            n[len("L__self___") :].replace("_", ".") for n in nn_module_stack.keys()
+            n[len("L['self'].") :] for n, klass in nn_module_stack.values()
         ]
         return module_name in names
 
