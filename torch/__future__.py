@@ -36,7 +36,7 @@ def set_swap_module_params_on_conversion(value: bool) -> None:
 
     .. note::
         If :func:`~torch.__future__.get_overwrite_module_params_on_conversion` returns ``True``,
-        no swapping will occur.
+        for methods other than :meth:`~nn.Module.load_state_dict` no swapping will occur.
 
     When enabled, the following methods will swap the existing parameters in-place:
 
@@ -44,6 +44,7 @@ def set_swap_module_params_on_conversion(value: bool) -> None:
     #. ``module.{dtype}()`` (e.g. ``module.float()``) for converting a module to a different dtype
        (for converting a module to a different dtype)
     #. ``module.to()``
+    #. ``module.load_state_dict(state_dict)``
 
     """
     global _swap_module_params_on_conversion

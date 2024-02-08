@@ -710,6 +710,37 @@ class Tensor(torch._C.TensorBase):
         self._typed_storage()._share_memory_()
         return self
 
+    def module_load(self, other):
+        r"""Defines how ``other`` should be transformed when loading ``other`` from a state_dict into ``self``.
+
+        Used when :func:`~torch.__future__.get_swap_module_params_on_conversion` is ``True``.
+
+        If ``self`` is a parameter or buffer in an ``nn.Module`` and ``other`` is the
+        value in the state dictionary with the corresponding key, this method defines
+        how ``other`` is remapped before being swapped with ``self`` via
+        :func:`~torch.utils.swap_tensor(self, other)`` in ``module.load_state_dict()``.
+
+        To customize how to load from or to a tensor subclass, one can override this function with
+        ``__torch_function__``.
+
+        After applying ``result = self.module_load_from(other)``, if ``self`` is an ``nn.Parameter``,
+        ``result`` will be wrapped in a new :class:`~torch.nn.Parameter` instance before
+        being swapped with ``self``.
+
+        ..note::
+            If both ``self`` and ``other`` have ``__torch_function__`` handlers implemented
+            for this method, the handler of ``self`` will take precedence unless ``other``
+            subclasses ``self``, then the handler of ``other`` will take precedence.
+
+        Args:
+            other (Tensor): value in state dict with key corresponding to ``self``
+
+        """
+        if has_torch_function_variadic(self, other):
+            return handle_torch_function(Tensor.module_load, (self, other), self, other)
+        # In the default case, swap_tensors becomes a no-op
+        return self.copy_(other)
+
     def __reversed__(self):
         r"""Reverses the tensor along dimension 0."""
         if has_torch_function_unary(self):
