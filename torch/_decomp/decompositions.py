@@ -1840,6 +1840,113 @@ def _native_batch_norm_legit_functional(
     return output, save_mean, save_rstd, new_running_mean, new_running_var
 
 
+def _get_batch_norm_reserve_tensor(
+    input: Tensor,
+    weight: Optional[Tensor],
+    bias: Optional[Tensor],
+    running_mean: Tensor,
+    running_var: Tensor,
+    eps: float,
+    cudnn_enabled: bool,
+) -> Tensor:
+    """
+    Return a reserve tensor for batch norm, used only by cudnn to pass forward state to the
+    backward pass. This is needed for `batch_norm_with_update` and `batch_norm_no_update`,
+    which support a variety of backends including cudnn. We create this tensor here to get
+    the correct shape in the traced graph if we detect that will call the cudnn kernel,
+    and rely on DCE to avoid materializing this tensor.
+    """
+    backend = torch._C._select_batch_norm_backend(  # type: ignore[attr-defined]
+        input, weight, bias, running_mean, running_var, True, eps, cudnn_enabled
+    )
+    if backend == torch._C._BatchNormBackend.Cudnn:  # type: ignore[attr-defined]
+        reserve_size = torch._C._get_cudnn_batch_norm_reserve_space_size(input)  # type: ignore[attr-defined]
+        return torch.empty(
+            reserve_size, dtype=input.dtype, layout=input.layout, device=input.device
+        )
+    else:
+        return torch.empty(0, dtype=torch.uint8)
+
+
+@register_decomposition(aten.batch_norm_with_update.default)
+def batch_norm_with_update(
+    input: Tensor,
+    weight: Optional[Tensor],
+    bias: Optional[Tensor],
+    running_mean: Tensor,
+    running_var: Tensor,
+    momentum: float,
+    eps: float,
+    cudnn_enabled: bool,
+) -> Tuple[Tensor, Tensor, Tensor, Tensor]:
+    output, save_mean, save_rstd, _, _ = native_batch_norm_helper(
+        input,
+        weight,
+        bias,
+        running_mean,
+        running_var,
+        True,  # training
+        momentum,
+        eps,
+        False,  # functional
+    )
+    reserve = _get_batch_norm_reserve_tensor(
+        input, weight, bias, running_mean, running_var, eps, cudnn_enabled
+    )
+    return output, save_mean, save_rstd, reserve
+
+
+@register_decomposition(aten.batch_norm_with_update_functional.default)
+def batch_norm_with_update_functional(
+    input: Tensor,
+    weight: Optional[Tensor],
+    bias: Optional[Tensor],
+    running_mean: Tensor,
+    running_var: Tensor,
+    momentum: float,
+    eps: float,
+    cudnn_enabled: bool,
+) -> Tuple[Tensor, Tensor, Tensor, Tensor]:
+    return batch_norm_with_update(
+        input,
+        weight,
+        bias,
+        running_mean.clone(),
+        running_var.clone(),
+        momentum,
+        eps,
+        cudnn_enabled,
+    )
+
+
+@register_decomposition(aten.batch_norm_no_update.default)
+def batch_norm_no_update(
+    input: Tensor,
+    weight: Optional[Tensor],
+    bias: Optional[Tensor],
+    running_mean: Tensor,
+    running_var: Tensor,
+    momentum: float,
+    eps: float,
+    cudnn_enabled: bool,
+) -> Tuple[Tensor, Tensor, Tensor, Tensor]:
+    output, save_mean, save_rstd, _, _ = native_batch_norm_helper(
+        input,
+        weight,
+        bias,
+        running_mean,
+        running_var,
+        False,  # training
+        momentum,
+        eps,
+        False,  # functional
+    )
+    reserve = _get_batch_norm_reserve_tensor(
+        input, weight, bias, running_mean, running_var, eps, cudnn_enabled
+    )
+    return output, save_mean, save_rstd, reserve
+
+
 @register_decomposition(aten._fused_dropout)
 @out_wrapper("out0", "out1")
 @pw_cast_for_opmath
