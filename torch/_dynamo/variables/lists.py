@@ -397,6 +397,10 @@ class TupleVariable(BaseListVariable):
     def python_type(self):
         return tuple
 
+    def as_proxy(self):
+        assert self.python_type() is not SizeVariable
+        return self.python_type()(*self._as_proxy())
+
     def reconstruct(self, codegen):
         codegen.foreach(self.items)
         return [create_instruction("BUILD_TUPLE", arg=len(self.items))]
