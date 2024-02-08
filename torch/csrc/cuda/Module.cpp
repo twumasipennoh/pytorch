@@ -95,13 +95,13 @@ PyObject* THCPModule_setDevice_wrap(PyObject* self, PyObject* arg) {
 PyObject* THCPModule_exchangeDevice(PyObject* self, PyObject* arg) {
   HANDLE_TH_ERRORS
   TORCH_CHECK(THPUtils_checkLong(arg), "invalid argument to exchangeDevice");
-  int device = THPUtils_unpackInt(arg);
+  int64_t device = THPUtils_unpackLong(arg);
   if (device < 0) {
     return THPUtils_packInt32(-1);
   }
 
   torch::utils::device_lazy_init(at::kCUDA);
-  int current_device = c10::cuda::ExchangeDevice(device);
+  int current_device = c10::cuda::ExchangeDevice(static_cast<int>(device));
 
   return THPUtils_packInt32(current_device);
   END_HANDLE_TH_ERRORS
@@ -110,13 +110,13 @@ PyObject* THCPModule_exchangeDevice(PyObject* self, PyObject* arg) {
 PyObject* THCPModule_maybeExchangeDevice(PyObject* self, PyObject* arg) {
   HANDLE_TH_ERRORS
   TORCH_CHECK(THPUtils_checkLong(arg), "invalid argument to exchangeDevice");
-  int device = THPUtils_unpackInt(arg);
+  int64_t device = THPUtils_unpackLong(arg);
   if (device < 0) {
     return THPUtils_packInt32(-1);
   }
 
   torch::utils::device_lazy_init(at::kCUDA);
-  int current_device = c10::cuda::MaybeExchangeDevice(device);
+  int current_device = c10::cuda::MaybeExchangeDevice(static_cast<int>(device));
 
   return THPUtils_packInt32(current_device);
   END_HANDLE_TH_ERRORS
